@@ -137,7 +137,13 @@ func (e *Exporter) Run() error {
 	if err := prometheus.Register(c); err != nil {
 		return errors.Wrap(err, "failed to register metrics")
 	}
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
+	var optns prometheus.ProcessCollectorOpts
+	optns.PidFn = func() (int, error) {
+		return os.Getpid(), nil
+	}
+	optns.Namespace = ""
+	optns.ReportErrors = false
+	prometheus.Unregister(prometheus.NewProcessCollector(optns))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
 	http.HandleFunc("/healthz", e.healthz)
